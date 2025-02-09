@@ -25,6 +25,31 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
   const [customCode, setCustomCode] = useState("");
   const [timeLeft, setTimeLeft] = useState(300);
   const [checkedInCount, setCheckedInCount] = useState(0);
+  const [preparationCountdown, setPreparationCountdown] = useState(0);
+  const [generatedCode, setGeneratedCode] = useState("");
+
+  useEffect(() => {
+    if (preparationCountdown > 0) {
+      const timer = setInterval(() => {
+        setPreparationCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            if (generatedCode) {
+              setCustomCode(generatedCode);
+              toast({
+                title: "Code Ready",
+                description: `Your check-in code is: ${generatedCode}`,
+              });
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [preparationCountdown, generatedCode]);
 
   useEffect(() => {
     if (activeSession) {
@@ -45,16 +70,17 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
 
   const handleGenerateCode = () => {
     const code = generateRandomCode();
-    setCustomCode(code);
+    setGeneratedCode(code);
+    setPreparationCountdown(120); // 2 minutes countdown
     toast({
-      title: "Code Generated",
-      description: `New code: ${code}`,
+      title: "Preparing Session",
+      description: "Code will be revealed in 2 minutes",
     });
   };
 
   const startSession = async (classId: string, customCode?: string) => {
     try {
-      const code = customCode || generateRandomCode();
+      const code = customCode || generatedCode;
       const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
       const { data, error } = await supabase
@@ -137,6 +163,7 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
       setActiveSession(null);
       setTimeLeft(300);
       setCustomCode("");
+      setGeneratedCode("");
     } catch (error: any) {
       toast({
         title: "Error ending session",
@@ -153,6 +180,8 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
         <CardDescription>
           {activeSession
             ? "Active session in progress"
+            : preparationCountdown > 0
+            ? "Preparing session..."
             : "Start a new check-in session"}
         </CardDescription>
       </CardHeader>
@@ -186,35 +215,49 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="custom-code">Session Code</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="custom-code"
-                  value={customCode}
-                  onChange={(e) => {
-                    const value = e.target.value.toUpperCase();
-                    if (value.length <= 6 && /^[A-Z0-9]*$/.test(value)) {
-                      setCustomCode(value);
-                    }
-                  }}
-                  placeholder="Enter or generate 6-character code"
-                  maxLength={6}
-                />
-                <Button onClick={handleGenerateCode}>
-                  Generate
-                </Button>
+            {preparationCountdown > 0 ? (
+              <div className="text-center space-y-2">
+                <p className="text-lg font-semibold">Preparing Session</p>
+                <p className="text-3xl font-bold">
+                  {Math.floor(preparationCountdown / 60)}:
+                  {(preparationCountdown % 60).toString().padStart(2, "0")}
+                </p>
+                <p className="text-sm text-gray-500">Code will appear soon</p>
               </div>
-            </div>
-            {classes.map((classItem) => (
-              <Button
-                key={classItem.id}
-                className="w-full"
-                onClick={() => startSession(classItem.id, customCode)}
-              >
-                Start Session for {classItem.name}
-              </Button>
-            ))}
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="custom-code">Session Code</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="custom-code"
+                      value={customCode}
+                      onChange={(e) => {
+                        const value = e.target.value.toUpperCase();
+                        if (value.length <= 6 && /^[A-Z0-9]*$/.test(value)) {
+                          setCustomCode(value);
+                        }
+                      }}
+                      placeholder="Enter or generate 6-character code"
+                      maxLength={6}
+                    />
+                    <Button onClick={handleGenerateCode}>
+                      Generate
+                    </Button>
+                  </div>
+                </div>
+                {classes.map((classItem) => (
+                  <Button
+                    key={classItem.id}
+                    className="w-full"
+                    onClick={() => startSession(classItem.id, customCode)}
+                    disabled={preparationCountdown > 0}
+                  >
+                    Start Session for {classItem.name}
+                  </Button>
+                ))}
+              </>
+            )}
           </div>
         )}
       </CardContent>
