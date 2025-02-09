@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -32,9 +33,23 @@ const SignUp = () => {
     role: "student" as "student" | "teacher",
     subject: "",
   });
+  const [error, setError] = useState<string>("");
+
+  const validateEmail = (email: string) => {
+    // Basic email validation regex
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+
+    if (!validateEmail(formData.email)) {
+      setError("Please enter a valid email address");
+      return;
+    }
+
     try {
       await signup(formData);
       toast({
@@ -43,12 +58,17 @@ const SignUp = () => {
         duration: 3000,
       });
       navigate("/dashboard");
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Something went wrong. Please try again.",
-        variant: "destructive",
-      });
+    } catch (error: any) {
+      // Handle specific error cases
+      if (error.message && error.message.includes("email_address_invalid")) {
+        setError("Please use a valid email address (e.g., from outlook.com, gmail.com)");
+      } else {
+        toast({
+          title: "Error",
+          description: "Something went wrong. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -62,6 +82,11 @@ const SignUp = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
