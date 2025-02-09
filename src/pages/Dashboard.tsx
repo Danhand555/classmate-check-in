@@ -75,6 +75,11 @@ const Dashboard = () => {
     for (let i = 0; i < 6; i++) {
       code += characters.charAt(Math.floor(Math.random() * characters.length));
     }
+    setCustomCode(code);
+    toast({
+      title: "Code Generated",
+      description: `New code: ${code}`,
+    });
     return code;
   };
 
@@ -201,7 +206,7 @@ const Dashboard = () => {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {user.role === "teacher" && (
             <Card className="col-span-full animate-fadeIn">
               <CardHeader>
@@ -243,19 +248,24 @@ const Dashboard = () => {
                 ) : (
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="custom-code">Custom Code (Optional)</Label>
-                      <Input
-                        id="custom-code"
-                        value={customCode}
-                        onChange={(e) => {
-                          const value = e.target.value.toUpperCase();
-                          if (value.length <= 6 && /^[A-Z0-9]*$/.test(value)) {
-                            setCustomCode(value);
-                          }
-                        }}
-                        placeholder="Enter 6-character code"
-                        maxLength={6}
-                      />
+                      <Label htmlFor="custom-code">Session Code</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="custom-code"
+                          value={customCode}
+                          onChange={(e) => {
+                            const value = e.target.value.toUpperCase();
+                            if (value.length <= 6 && /^[A-Z0-9]*$/.test(value)) {
+                              setCustomCode(value);
+                            }
+                          }}
+                          placeholder="Enter or generate 6-character code"
+                          maxLength={6}
+                        />
+                        <Button onClick={() => generateRandomCode()}>
+                          Generate
+                        </Button>
+                      </div>
                     </div>
                     {classes.map((classItem) => (
                       <Button
@@ -271,20 +281,6 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           )}
-
-          <Card className="animate-fadeIn">
-            <CardHeader>
-              <CardTitle>Quick Check-in</CardTitle>
-              <CardDescription>
-                {user.role === "teacher"
-                  ? "Mark your attendance for today"
-                  : "Check in to your classes"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button className="w-full">Check In</Button>
-            </CardContent>
-          </Card>
 
           <Card className="animate-fadeIn [animation-delay:200ms]">
             <CardHeader>
@@ -314,8 +310,8 @@ const Dashboard = () => {
 
           <Card className="animate-fadeIn [animation-delay:400ms]">
             <CardHeader>
-              <CardTitle>Attendance Statistics</CardTitle>
-              <CardDescription>View your attendance records</CardDescription>
+              <CardTitle>Attendance History</CardTitle>
+              <CardDescription>View past attendance records</CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-gray-600">No data available</p>
