@@ -29,7 +29,7 @@ const SignUp = () => {
     name: "",
     email: "",
     password: "",
-    role: "student",
+    role: "student" as "student" | "teacher",
     subject: "",
   });
 
