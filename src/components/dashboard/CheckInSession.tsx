@@ -34,13 +34,10 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
         setPreparationCountdown((prev) => {
           if (prev <= 1) {
             clearInterval(timer);
-            if (generatedCode) {
-              setCustomCode(generatedCode);
-              toast({
-                title: "Code Ready",
-                description: `Your check-in code is: ${generatedCode}`,
-              });
-            }
+            toast({
+              title: "Ready to Start Session",
+              description: "You can now start the check-in session",
+            });
             return 0;
           }
           return prev - 1;
@@ -49,7 +46,7 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
 
       return () => clearInterval(timer);
     }
-  }, [preparationCountdown, generatedCode]);
+  }, [preparationCountdown]);
 
   useEffect(() => {
     if (activeSession) {
@@ -71,10 +68,11 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
   const handleGenerateCode = () => {
     const code = generateRandomCode();
     setGeneratedCode(code);
+    setCustomCode(code);
     setPreparationCountdown(120); // 2 minutes countdown
     toast({
-      title: "Preparing Session",
-      description: "Code will be revealed in 2 minutes",
+      title: "Code Generated",
+      description: `Your code is: ${code}. Session can be started in 2 minutes.`,
     });
   };
 
@@ -215,49 +213,45 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
           </div>
         ) : (
           <div className="space-y-4">
-            {preparationCountdown > 0 ? (
-              <div className="text-center space-y-2">
-                <p className="text-lg font-semibold">Preparing Session</p>
-                <p className="text-3xl font-bold">
+            <div className="space-y-2">
+              <Label htmlFor="custom-code">Session Code</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="custom-code"
+                  value={customCode}
+                  onChange={(e) => {
+                    const value = e.target.value.toUpperCase();
+                    if (value.length <= 6 && /^[A-Z0-9]*$/.test(value)) {
+                      setCustomCode(value);
+                    }
+                  }}
+                  placeholder="Enter or generate 6-character code"
+                  maxLength={6}
+                />
+                <Button onClick={handleGenerateCode}>
+                  Generate
+                </Button>
+              </div>
+            </div>
+            {preparationCountdown > 0 && (
+              <div className="text-center py-2 bg-secondary rounded-md">
+                <p className="text-sm text-muted-foreground">
+                  Session can be started in{" "}
                   {Math.floor(preparationCountdown / 60)}:
                   {(preparationCountdown % 60).toString().padStart(2, "0")}
                 </p>
-                <p className="text-sm text-gray-500">Code will appear soon</p>
               </div>
-            ) : (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="custom-code">Session Code</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="custom-code"
-                      value={customCode}
-                      onChange={(e) => {
-                        const value = e.target.value.toUpperCase();
-                        if (value.length <= 6 && /^[A-Z0-9]*$/.test(value)) {
-                          setCustomCode(value);
-                        }
-                      }}
-                      placeholder="Enter or generate 6-character code"
-                      maxLength={6}
-                    />
-                    <Button onClick={handleGenerateCode}>
-                      Generate
-                    </Button>
-                  </div>
-                </div>
-                {classes.map((classItem) => (
-                  <Button
-                    key={classItem.id}
-                    className="w-full"
-                    onClick={() => startSession(classItem.id, customCode)}
-                    disabled={preparationCountdown > 0}
-                  >
-                    Start Session for {classItem.name}
-                  </Button>
-                ))}
-              </>
             )}
+            {classes.map((classItem) => (
+              <Button
+                key={classItem.id}
+                className="w-full"
+                onClick={() => startSession(classItem.id, customCode)}
+                disabled={preparationCountdown > 0}
+              >
+                Start Session for {classItem.name}
+              </Button>
+            ))}
           </div>
         )}
       </CardContent>
