@@ -74,6 +74,30 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          role: string
+          subject: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          name: string
+          role: string
+          subject?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          role?: string
+          subject?: string | null
+        }
+        Relationships: []
+      }
       student_check_ins: {
         Row: {
           checked_in_at: string

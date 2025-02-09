@@ -34,9 +34,9 @@ const SignUp = () => {
     subject: "",
   });
   const [error, setError] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const validateEmail = (email: string) => {
-    // Basic email validation regex
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
@@ -44,14 +44,22 @@ const SignUp = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
 
     if (!validateEmail(formData.email)) {
       setError("Please enter a valid email address");
+      setIsLoading(false);
       return;
     }
 
+    // For students, we don't need the subject field
+    const signupData = {
+      ...formData,
+      subject: formData.role === 'student' ? undefined : formData.subject,
+    };
+
     try {
-      await signup(formData);
+      await signup(signupData);
       toast({
         title: "Account created successfully",
         description: "Welcome to the Classroom Check-in System!",
@@ -59,16 +67,20 @@ const SignUp = () => {
       });
       navigate("/dashboard");
     } catch (error: any) {
-      // Handle specific error cases
-      if (error.message && error.message.includes("email_address_invalid")) {
-        setError("Please use a valid email address (e.g., from outlook.com, gmail.com)");
+      console.error("Signup error:", error);
+      if (error.message && typeof error.message === 'string') {
+        if (error.message.includes("email_address_invalid")) {
+          setError("Please use a valid email address from a recognized provider (e.g., outlook.com, gmail.com)");
+        } else if (error.message.includes("User already registered")) {
+          setError("An account with this email already exists. Please try logging in instead.");
+        } else {
+          setError(error.message);
+        }
       } else {
-        toast({
-          title: "Error",
-          description: "Something went wrong. Please try again.",
-          variant: "destructive",
-        });
+        setError("An error occurred during signup. Please try again.");
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -156,8 +168,8 @@ const SignUp = () => {
                 />
               </div>
             )}
-            <Button type="submit" className="w-full">
-              Sign Up
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Creating account..." : "Sign Up"}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
               Already have an account?{" "}
