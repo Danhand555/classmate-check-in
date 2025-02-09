@@ -1,18 +1,17 @@
 
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Clock4, Timer, Users } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { generateRandomCode } from "@/utils/codeGenerator";
-import { Progress } from "@/components/ui/progress";
+import { startCheckInSession, endCheckInSession } from "@/utils/sessionManagement";
+import { ActiveSession } from "./ActiveSession";
+import { CodeGeneratorForm } from "./CodeGeneratorForm";
 
 interface CheckInSessionProps {
   classes: any[];
@@ -22,9 +21,8 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
   const { toast } = useToast();
   const [activeSession, setActiveSession] = useState<any>(null);
   const [customCode, setCustomCode] = useState("");
-  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(300);
   const [checkedInCount, setCheckedInCount] = useState(0);
-  const [selectedClass, setSelectedClass] = useState<any>(null);
 
   useEffect(() => {
     if (activeSession) {
@@ -32,7 +30,7 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
             clearInterval(timer);
-            endSession();
+            handleEndSession();
             return 0;
           }
           return prev - 1;
@@ -43,7 +41,7 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
     }
   }, [activeSession]);
 
-  const handleGenerateCode = async () => {
+  const handleGenerateCode = () => {
     const code = generateRandomCode();
     setCustomCode(code);
     toast({
@@ -52,9 +50,9 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
     });
   };
 
-  const startSession = async (classId: string, code: string) => {
+  const handleStartSession = async () => {
     try {
-      if (!code) {
+      if (!customCode) {
         toast({
           title: "Error",
           description: "Please enter or generate a code first",
@@ -63,28 +61,22 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
         return;
       }
 
-      const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+      if (classes.length === 0) {
+        toast({
+          title: "Error",
+          description: "No classes available",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      const { data, error } = await supabase
-        .from("check_in_sessions")
-        .insert([
-          {
-            class_id: classId,
-            code,
-            expires_at: expiresAt.toISOString(),
-          },
-        ])
-        .select()
-        .single();
-
-      if (error) throw error;
-
+      const data = await startCheckInSession(classes[0].id, customCode);
       setActiveSession(data);
       setTimeLeft(300);
       setCheckedInCount(0);
       toast({
         title: "Session started",
-        description: `Check-in code: ${code}`,
+        description: `Check-in code: ${customCode}`,
       });
 
       const channel = supabase
@@ -115,27 +107,11 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
     }
   };
 
-  const endSession = async () => {
+  const handleEndSession = async () => {
     if (!activeSession) return;
 
     try {
-      const { error } = await supabase
-        .from("check_in_sessions")
-        .update({ is_active: false })
-        .eq("id", activeSession.id);
-
-      if (error) throw error;
-
-      const { data: checkIns, error: checkInsError } = await supabase
-        .from("student_check_ins")
-        .select(`
-          *,
-          student:student_id(name)
-        `)
-        .eq("session_id", activeSession.id)
-        .order("checked_in_at", { ascending: true });
-
-      if (checkInsError) throw checkInsError;
+      const checkIns = await endCheckInSession(activeSession.id);
 
       toast({
         title: "Session ended",
@@ -145,7 +121,6 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
       setActiveSession(null);
       setTimeLeft(300);
       setCustomCode("");
-      setSelectedClass(null);
     } catch (error: any) {
       toast({
         title: "Error ending session",
@@ -155,8 +130,6 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
     }
   };
 
-  const progressValue = (timeLeft / 300) * 100;
-
   return (
     <Card className="col-span-full animate-fadeIn">
       <CardHeader>
@@ -164,72 +137,19 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
       </CardHeader>
       <CardContent>
         {activeSession ? (
-          <div className="space-y-8 py-4">
-            <div className="text-center space-y-6">
-              <div>
-                <p className="text-blue-600 text-xl">Active Code:</p>
-                <p className="text-blue-600 text-6xl font-bold tracking-wider">
-                  {activeSession.code}
-                </p>
-              </div>
-              <div className="space-y-2">
-                <p className="text-blue-600 text-xl flex items-center justify-center gap-2">
-                  <Clock4 className="w-6 h-6" />
-                  Time Remaining:
-                </p>
-                <Progress value={progressValue} className="h-3" />
-                <p className="text-blue-600 text-4xl font-bold">
-                  {Math.floor(timeLeft / 60)}:
-                  {(timeLeft % 60).toString().padStart(2, "0")}
-                </p>
-              </div>
-              <div className="flex items-center justify-center gap-2 text-blue-600 text-xl">
-                <Users className="w-6 h-6" />
-                <span>{checkedInCount} students checked in</span>
-              </div>
-            </div>
-            <Button
-              variant="destructive"
-              className="w-full"
-              onClick={endSession}
-            >
-              End Session
-            </Button>
-          </div>
+          <ActiveSession
+            code={activeSession.code}
+            timeLeft={timeLeft}
+            checkedInCount={checkedInCount}
+            onEndSession={handleEndSession}
+          />
         ) : (
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <Input
-                value={customCode}
-                onChange={(e) => {
-                  const value = e.target.value.toUpperCase();
-                  if (value.length <= 6 && /^[A-Z0-9]*$/.test(value)) {
-                    setCustomCode(value);
-                  }
-                }}
-                placeholder="Enter custom code"
-                maxLength={6}
-                className="text-lg"
-              />
-              <Button 
-                className="bg-blue-600 hover:bg-blue-700"
-                onClick={() => {
-                  if (classes.length > 0) {
-                    startSession(classes[0].id, customCode);
-                  }
-                }}
-              >
-                Use Code
-              </Button>
-            </div>
-            <Button
-              className="w-full h-16 text-lg bg-green-600 hover:bg-green-700"
-              onClick={handleGenerateCode}
-            >
-              <Timer className="w-6 h-6 mr-2" />
-              Generate Random Code
-            </Button>
-          </div>
+          <CodeGeneratorForm
+            customCode={customCode}
+            onCodeChange={setCustomCode}
+            onGenerateCode={handleGenerateCode}
+            onStartSession={handleStartSession}
+          />
         )}
       </CardContent>
     </Card>
