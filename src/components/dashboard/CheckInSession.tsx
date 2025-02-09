@@ -12,6 +12,7 @@ import { Clock4, Timer, Users } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { generateRandomCode } from "@/utils/codeGenerator";
+import { Progress } from "@/components/ui/progress";
 
 interface CheckInSessionProps {
   classes: any[];
@@ -21,7 +22,7 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
   const { toast } = useToast();
   const [activeSession, setActiveSession] = useState<any>(null);
   const [customCode, setCustomCode] = useState("");
-  const [timeLeft, setTimeLeft] = useState(300);
+  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
   const [checkedInCount, setCheckedInCount] = useState(0);
   const [selectedClass, setSelectedClass] = useState<any>(null);
 
@@ -154,6 +155,8 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
     }
   };
 
+  const progressValue = (timeLeft / 300) * 100;
+
   return (
     <Card className="col-span-full animate-fadeIn">
       <CardHeader>
@@ -169,9 +172,13 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
                   {activeSession.code}
                 </p>
               </div>
-              <div>
-                <p className="text-blue-600 text-xl">Time Remaining:</p>
-                <p className="text-blue-600 text-6xl font-bold">
+              <div className="space-y-2">
+                <p className="text-blue-600 text-xl flex items-center justify-center gap-2">
+                  <Clock4 className="w-6 h-6" />
+                  Time Remaining:
+                </p>
+                <Progress value={progressValue} className="h-3" />
+                <p className="text-blue-600 text-4xl font-bold">
                   {Math.floor(timeLeft / 60)}:
                   {(timeLeft % 60).toString().padStart(2, "0")}
                 </p>
