@@ -4,13 +4,11 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Clock4 } from "lucide-react";
+import { Clock4, Timer, Users } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { generateRandomCode } from "@/utils/codeGenerator";
@@ -44,22 +42,26 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
     }
   }, [activeSession]);
 
-  const handleGenerateCode = async (classItem: any) => {
-    setSelectedClass(classItem);
+  const handleGenerateCode = async () => {
     const code = generateRandomCode();
     setCustomCode(code);
-    
     toast({
-      title: "Starting Session",
+      title: "Code Generated",
       description: `Generated code: ${code}`,
     });
-
-    await startSession(classItem.id, code);
   };
 
-  const startSession = async (classId: string, customCode?: string) => {
+  const startSession = async (classId: string, code: string) => {
     try {
-      const code = customCode || "";
+      if (!code) {
+        toast({
+          title: "Error",
+          description: "Please enter or generate a code first",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
       const { data, error } = await supabase
@@ -155,31 +157,28 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
   return (
     <Card className="col-span-full animate-fadeIn">
       <CardHeader>
-        <CardTitle>Check-in Session</CardTitle>
-        <CardDescription>
-          {activeSession
-            ? "Active session in progress"
-            : "Start a new check-in session"}
-        </CardDescription>
+        <CardTitle>Class Code Generator</CardTitle>
       </CardHeader>
       <CardContent>
         {activeSession ? (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="space-y-8 py-4">
+            <div className="text-center space-y-6">
               <div>
-                <p className="text-lg font-semibold">
-                  Code: {activeSession.code}
-                </p>
-                <p className="text-sm text-gray-500">
-                  Students checked in: {checkedInCount}
+                <p className="text-blue-600 text-xl">Active Code:</p>
+                <p className="text-blue-600 text-6xl font-bold tracking-wider">
+                  {activeSession.code}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                <Clock4 className="w-4 h-4" />
-                <span>
+              <div>
+                <p className="text-blue-600 text-xl">Time Remaining:</p>
+                <p className="text-blue-600 text-6xl font-bold">
                   {Math.floor(timeLeft / 60)}:
                   {(timeLeft % 60).toString().padStart(2, "0")}
-                </span>
+                </p>
+              </div>
+              <div className="flex items-center justify-center gap-2 text-blue-600 text-xl">
+                <Users className="w-6 h-6" />
+                <span>{checkedInCount} students checked in</span>
               </div>
             </div>
             <Button
@@ -192,32 +191,37 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="custom-code">Session Code</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="custom-code"
-                  value={customCode}
-                  onChange={(e) => {
-                    const value = e.target.value.toUpperCase();
-                    if (value.length <= 6 && /^[A-Z0-9]*$/.test(value)) {
-                      setCustomCode(value);
-                    }
-                  }}
-                  placeholder="Enter custom 6-character code"
-                  maxLength={6}
-                />
-              </div>
-            </div>
-            {classes.map((classItem) => (
-              <Button
-                key={classItem.id}
-                className="w-full"
-                onClick={() => handleGenerateCode(classItem)}
+            <div className="flex gap-2">
+              <Input
+                value={customCode}
+                onChange={(e) => {
+                  const value = e.target.value.toUpperCase();
+                  if (value.length <= 6 && /^[A-Z0-9]*$/.test(value)) {
+                    setCustomCode(value);
+                  }
+                }}
+                placeholder="Enter custom code"
+                maxLength={6}
+                className="text-lg"
+              />
+              <Button 
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={() => {
+                  if (classes.length > 0) {
+                    startSession(classes[0].id, customCode);
+                  }
+                }}
               >
-                Generate Code & Start Session for {classItem.name}
+                Use Code
               </Button>
-            ))}
+            </div>
+            <Button
+              className="w-full h-16 text-lg bg-green-600 hover:bg-green-700"
+              onClick={handleGenerateCode}
+            >
+              <Timer className="w-6 h-6 mr-2" />
+              Generate Random Code
+            </Button>
           </div>
         )}
       </CardContent>
