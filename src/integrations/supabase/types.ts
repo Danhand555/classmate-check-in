@@ -79,18 +79,21 @@ export type Database = {
           checked_in_at: string
           id: string
           session_id: string
+          status: string
           student_id: string
         }
         Insert: {
           checked_in_at?: string
           id?: string
           session_id: string
+          status?: string
           student_id: string
         }
         Update: {
           checked_in_at?: string
           id?: string
           session_id?: string
+          status?: string
           student_id?: string
         }
         Relationships: [
