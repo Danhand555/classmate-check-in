@@ -42,7 +42,14 @@ export const RecentCheckIns = () => {
         .limit(5);
 
       if (!error && data) {
-        setCheckIns(data);
+        // Transform the data to match the CheckIn type
+        const transformedData: CheckIn[] = data.map(item => ({
+          id: item.id,
+          checked_in_at: item.checked_in_at,
+          status: item.status,
+          classes: item.check_in_sessions?.classes || null
+        }));
+        setCheckIns(transformedData);
       }
       setIsLoading(false);
     };

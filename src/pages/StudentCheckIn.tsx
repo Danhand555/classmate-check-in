@@ -1,17 +1,29 @@
 
-import { useState } from "react";
+import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { CodeEntry } from "@/components/check-in/CodeEntry";
 import { RecentCheckIns } from "@/components/check-in/RecentCheckIns";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const StudentCheckIn = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    if (user.role !== "student") {
+      toast.error("Only students can access this page");
+      navigate("/dashboard");
+    }
+  }, [user, navigate]);
+
   if (!user) {
-    navigate("/login");
     return null;
   }
 

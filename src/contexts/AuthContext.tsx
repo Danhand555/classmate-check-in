@@ -1,5 +1,7 @@
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 type UserRole = "teacher" | "student";
 
@@ -21,7 +23,7 @@ interface AuthContextType {
     role: UserRole;
     subject?: string;
   }) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -31,16 +33,59 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [user, setUser] = useState<User | null>(null);
 
+  useEffect(() => {
+    // Set up initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          name: session.user.user_metadata.name || "",
+          email: session.user.email || "",
+          role: session.user.user_metadata.role || "student",
+          subject: session.user.user_metadata.subject,
+        });
+      }
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          name: session.user.user_metadata.name || "",
+          email: session.user.email || "",
+          role: session.user.user_metadata.role || "student",
+          subject: session.user.user_metadata.subject,
+        });
+      } else {
+        setUser(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const login = async (email: string, password: string) => {
-    // Mock login - replace with actual authentication
-    const mockUser: User = {
-      id: "1",
-      name: "John Doe",
-      email: email,
-      role: "teacher",
-      subject: "Mathematics",
-    };
-    setUser(mockUser);
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    if (data.user) {
+      setUser({
+        id: data.user.id,
+        name: data.user.user_metadata.name || "",
+        email: data.user.email || "",
+        role: data.user.user_metadata.role || "student",
+        subject: data.user.user_metadata.subject,
+      });
+    }
   };
 
   const signup = async (userData: {
@@ -50,19 +95,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     role: UserRole;
     subject?: string;
   }) => {
-    // Mock signup - replace with actual registration
-    const newUser: User = {
-      id: Date.now().toString(),
-      name: userData.name,
+    const { data, error } = await supabase.auth.signUp({
       email: userData.email,
-      role: userData.role,
-      subject: userData.subject,
-    };
-    setUser(newUser);
+      password: userData.password,
+      options: {
+        data: {
+          name: userData.name,
+          role: userData.role,
+          subject: userData.subject,
+        },
+      },
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    if (data.user) {
+      setUser({
+        id: data.user.id,
+        name: userData.name,
+        email: userData.email,
+        role: userData.role,
+        subject: userData.subject,
+      });
+    }
   };
 
-  const logout = () => {
-    setUser(null);
+  const logout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error("Error signing out");
+    } else {
+      setUser(null);
+    }
   };
 
   return (
