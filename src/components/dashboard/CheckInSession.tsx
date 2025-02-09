@@ -25,28 +25,7 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
   const [customCode, setCustomCode] = useState("");
   const [timeLeft, setTimeLeft] = useState(300);
   const [checkedInCount, setCheckedInCount] = useState(0);
-  const [preparationCountdown, setPreparationCountdown] = useState(0);
-  const [generatedCode, setGeneratedCode] = useState("");
-
-  useEffect(() => {
-    if (preparationCountdown > 0) {
-      const timer = setInterval(() => {
-        setPreparationCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            toast({
-              title: "Ready to Start Session",
-              description: "You can now start the check-in session",
-            });
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(timer);
-    }
-  }, [preparationCountdown]);
+  const [selectedClass, setSelectedClass] = useState<any>(null);
 
   useEffect(() => {
     if (activeSession) {
@@ -65,20 +44,22 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
     }
   }, [activeSession]);
 
-  const handleGenerateCode = () => {
+  const handleGenerateCode = async (classItem: any) => {
+    setSelectedClass(classItem);
     const code = generateRandomCode();
-    setGeneratedCode(code);
     setCustomCode(code);
-    setPreparationCountdown(120); // 2 minutes countdown
+    
     toast({
-      title: "Code Generated",
-      description: `Your code is: ${code}. Session can be started in 2 minutes.`,
+      title: "Starting Session",
+      description: `Generated code: ${code}`,
     });
+
+    await startSession(classItem.id, code);
   };
 
   const startSession = async (classId: string, customCode?: string) => {
     try {
-      const code = customCode || generatedCode;
+      const code = customCode || "";
       const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
       const { data, error } = await supabase
@@ -161,7 +142,7 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
       setActiveSession(null);
       setTimeLeft(300);
       setCustomCode("");
-      setGeneratedCode("");
+      setSelectedClass(null);
     } catch (error: any) {
       toast({
         title: "Error ending session",
@@ -178,8 +159,6 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
         <CardDescription>
           {activeSession
             ? "Active session in progress"
-            : preparationCountdown > 0
-            ? "Preparing session..."
             : "Start a new check-in session"}
         </CardDescription>
       </CardHeader>
@@ -225,31 +204,18 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
                       setCustomCode(value);
                     }
                   }}
-                  placeholder="Enter or generate 6-character code"
+                  placeholder="Enter custom 6-character code"
                   maxLength={6}
                 />
-                <Button onClick={handleGenerateCode}>
-                  Generate
-                </Button>
               </div>
             </div>
-            {preparationCountdown > 0 && (
-              <div className="text-center py-2 bg-secondary rounded-md">
-                <p className="text-sm text-muted-foreground">
-                  Session can be started in{" "}
-                  {Math.floor(preparationCountdown / 60)}:
-                  {(preparationCountdown % 60).toString().padStart(2, "0")}
-                </p>
-              </div>
-            )}
             {classes.map((classItem) => (
               <Button
                 key={classItem.id}
                 className="w-full"
-                onClick={() => startSession(classItem.id, customCode)}
-                disabled={preparationCountdown > 0}
+                onClick={() => handleGenerateCode(classItem)}
               >
-                Start Session for {classItem.name}
+                Generate Code & Start Session for {classItem.name}
               </Button>
             ))}
           </div>
