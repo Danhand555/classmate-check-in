@@ -9,7 +9,100 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      check_in_sessions: {
+        Row: {
+          class_id: string
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          is_active: boolean | null
+          starts_at: string
+        }
+        Insert: {
+          class_id: string
+          code: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          is_active?: boolean | null
+          starts_at?: string
+        }
+        Update: {
+          class_id?: string
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_active?: boolean | null
+          starts_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "check_in_sessions_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      classes: {
+        Row: {
+          capacity: number
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          teacher_id: string
+        }
+        Insert: {
+          capacity: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          teacher_id: string
+        }
+        Update: {
+          capacity?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          teacher_id?: string
+        }
+        Relationships: []
+      }
+      student_check_ins: {
+        Row: {
+          checked_in_at: string
+          id: string
+          session_id: string
+          student_id: string
+        }
+        Insert: {
+          checked_in_at?: string
+          id?: string
+          session_id: string
+          student_id: string
+        }
+        Update: {
+          checked_in_at?: string
+          id?: string
+          session_id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_check_ins_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "check_in_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
