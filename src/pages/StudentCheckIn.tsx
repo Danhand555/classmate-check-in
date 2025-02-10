@@ -66,4 +66,3 @@ const StudentCheckIn = () => {
 };
 
 export default StudentCheckIn;
-
