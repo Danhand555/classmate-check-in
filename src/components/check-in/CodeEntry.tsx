@@ -1,51 +1,21 @@
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { CheckInProgress } from "./CheckInProgress";
+import { CodeEntryForm } from "./CodeEntryForm";
+import { useActiveSession } from "./hooks/useActiveSession";
+import type { CheckInSessionResponse } from "./types";
 
 export const CodeEntry = () => {
-  const [code, setCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeSession, setActiveSession] = useState<any>(null);
   const { toast } = useToast();
   const { user } = useAuth();
+  const activeSession = useActiveSession(user?.id);
 
-  useEffect(() => {
-    // Check if there's an active session for this student
-    const checkActiveSession = async () => {
-      if (!user) return;
-
-      const { data: checkIn } = await supabase
-        .from("student_check_ins")
-        .select(`
-          session:session_id(
-            id,
-            class:class_id(
-              capacity
-            )
-          )
-        `)
-        .eq("student_id", user.id)
-        .order("checked_in_at", { ascending: false })
-        .limit(1)
-        .single();
-
-      if (checkIn?.session) {
-        setActiveSession(checkIn.session);
-      }
-    };
-
-    checkActiveSession();
-  }, [user]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (code: string) => {
     if (!code || code.length !== 6) {
       toast({
         title: "Invalid code",
@@ -105,14 +75,11 @@ export const CodeEntry = () => {
         throw new Error("Failed to record check-in");
       }
 
-      setActiveSession(session);
-
       toast({
         title: "Success!",
         description: "You have successfully checked in",
         variant: "default",
       });
-      setCode("");
     } catch (error: any) {
       toast({
         title: "Error",
@@ -132,26 +99,7 @@ export const CodeEntry = () => {
           <CardDescription>Enter the code provided by your teacher</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Input
-                value={code}
-                onChange={(e) => setCode(e.target.value.toUpperCase())}
-                maxLength={6}
-                placeholder="Enter 6-character code"
-                className="text-center text-lg tracking-widest font-mono uppercase focus:ring-2 focus:ring-primary focus:border-transparent"
-                disabled={isSubmitting}
-              />
-            </div>
-            <Button 
-              type="submit" 
-              className="w-full bg-blue-500 hover:bg-blue-600 transition-colors"
-              disabled={isSubmitting || code.length !== 6}
-            >
-              Check In
-              <ArrowRight className="ml-2" />
-            </Button>
-          </form>
+          <CodeEntryForm onSubmit={handleSubmit} isSubmitting={isSubmitting} />
         </CardContent>
       </Card>
 

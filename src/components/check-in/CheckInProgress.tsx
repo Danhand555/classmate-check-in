@@ -16,7 +16,7 @@ interface StudentCheckIn {
   checked_in_at: string;
   student: {
     name: string;
-  };
+  } | null;
 }
 
 export const CheckInProgress = ({ sessionId, classCapacity }: CheckInProgressProps) => {
@@ -36,7 +36,7 @@ export const CheckInProgress = ({ sessionId, classCapacity }: CheckInProgressPro
         .order("checked_in_at", { ascending: true });
 
       if (data) {
-        setCheckIns(data);
+        setCheckIns(data as StudentCheckIn[]);
       }
     };
 
@@ -66,7 +66,7 @@ export const CheckInProgress = ({ sessionId, classCapacity }: CheckInProgressPro
             .single();
 
           if (data) {
-            setCheckIns((prev) => [...prev, data]);
+            setCheckIns((prev) => [...prev, data as StudentCheckIn]);
           }
         }
       )
