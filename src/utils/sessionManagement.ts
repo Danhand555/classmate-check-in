@@ -32,7 +32,7 @@ export const endCheckInSession = async (sessionId: string) => {
     .from("student_check_ins")
     .select(`
       *,
-      student:student_id(name)
+      student:profiles!student_check_ins_student_id_fkey(name)
     `)
     .eq("session_id", sessionId)
     .order("checked_in_at", { ascending: true });
