@@ -23,6 +23,14 @@ interface CheckInsTableProps {
 }
 
 export const CheckInsTable = ({ checkIns }: CheckInsTableProps) => {
+  if (!checkIns || checkIns.length === 0) {
+    return (
+      <div className="text-center py-4 text-muted-foreground">
+        No check-ins recorded yet
+      </div>
+    );
+  }
+
   return (
     <div className="border rounded-lg mt-4">
       <Table>

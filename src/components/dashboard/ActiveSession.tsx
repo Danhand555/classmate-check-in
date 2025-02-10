@@ -27,7 +27,7 @@ export const ActiveSession = ({
   checkIns,
   onEndSession 
 }: ActiveSessionProps) => {
-  const progressValue = (timeLeft / 300) * 100;
+  const progressValue = (timeLeft / 240) * 100;
 
   return (
     <div className="space-y-8 py-4">
@@ -55,9 +55,7 @@ export const ActiveSession = ({
         </div>
       </div>
 
-      {checkIns.length > 0 && (
-        <CheckInsTable checkIns={checkIns} />
-      )}
+      <CheckInsTable checkIns={checkIns} />
 
       <Button
         variant="destructive"

@@ -36,7 +36,9 @@ export const useSessionManagement = (selectedClassId: string) => {
           .order("checked_in_at", { ascending: true });
 
         if (data) {
+          console.log('Fetched check-ins:', data);
           setCheckIns(data);
+          setCheckedInCount(data.length);
         }
       };
 
@@ -63,7 +65,6 @@ export const useSessionManagement = (selectedClassId: string) => {
           },
           async (payload) => {
             console.log('New check-in:', payload);
-            setCheckedInCount((prev) => prev + 1);
             fetchCheckIns();
           }
         )
