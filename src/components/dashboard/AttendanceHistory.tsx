@@ -50,7 +50,7 @@ export const AttendanceHistory = () => {
           id,
           created_at,
           code,
-          class:class_id (
+          class:classes!check_in_sessions_class_id_fkey (
             name
           ),
           student_check_ins (

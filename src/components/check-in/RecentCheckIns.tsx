@@ -39,7 +39,7 @@ export const RecentCheckIns = () => {
           checked_in_at,
           status,
           check_in_sessions!inner (
-            class:class_id (
+            class:classes!check_in_sessions_class_id_fkey (
               name
             )
           )
