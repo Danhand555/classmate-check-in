@@ -62,7 +62,7 @@ export default function ClassLog() {
           created_at,
           code,
           check_in_details,
-          class:classes (
+          class:classes!check_in_sessions_class_id_fkey (
             name,
             capacity
           )
@@ -74,7 +74,12 @@ export default function ClassLog() {
         console.error('Error fetching session:', error);
         navigate('/dashboard');
       } else if (data) {
-        setSession(data);
+        // Ensure check_in_details is properly typed
+        const typedData: SessionDetails = {
+          ...data,
+          check_in_details: data.check_in_details as CheckInDetail[] | null,
+        };
+        setSession(typedData);
       }
       setIsLoading(false);
     };
