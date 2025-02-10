@@ -14,7 +14,7 @@ interface CheckInProgressProps {
 interface StudentCheckIn {
   id: string;
   checked_in_at: string;
-  student: {
+  profiles: {
     name: string;
   } | null;
 }
@@ -30,7 +30,9 @@ export const CheckInProgress = ({ sessionId, classCapacity }: CheckInProgressPro
         .select(`
           id,
           checked_in_at,
-          student:profiles!student_check_ins_student_id_fkey(name)
+          profiles (
+            name
+          )
         `)
         .eq("session_id", sessionId)
         .order("checked_in_at", { ascending: true });
@@ -60,7 +62,9 @@ export const CheckInProgress = ({ sessionId, classCapacity }: CheckInProgressPro
             .select(`
               id,
               checked_in_at,
-              student:profiles!student_check_ins_student_id_fkey(name)
+              profiles (
+                name
+              )
             `)
             .eq("id", payload.new.id)
             .single();
@@ -106,7 +110,7 @@ export const CheckInProgress = ({ sessionId, classCapacity }: CheckInProgressPro
             <TableBody>
               {checkIns.map((checkIn) => (
                 <TableRow key={checkIn.id}>
-                  <TableCell>{checkIn.student?.name}</TableCell>
+                  <TableCell>{checkIn.profiles?.name}</TableCell>
                   <TableCell>
                     {new Date(checkIn.checked_in_at).toLocaleTimeString()}
                   </TableCell>

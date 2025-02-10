@@ -31,8 +31,12 @@ export const endCheckInSession = async (sessionId: string) => {
   const { data: checkIns, error: checkInsError } = await supabase
     .from("student_check_ins")
     .select(`
-      *,
-      student:profiles!student_check_ins_student_id_fkey(name)
+      id,
+      checked_in_at,
+      student_id,
+      profiles (
+        name
+      )
     `)
     .eq("session_id", sessionId)
     .order("checked_in_at", { ascending: true });

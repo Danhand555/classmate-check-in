@@ -131,6 +131,13 @@ export type Database = {
             referencedRelation: "check_in_sessions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "student_check_ins_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
