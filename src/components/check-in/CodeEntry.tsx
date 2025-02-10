@@ -31,23 +31,26 @@ export const CodeEntry = () => {
       const { data: session, error: sessionError } = await supabase
         .from("check_in_sessions")
         .select(`
-          *,
-          is_session_valid(check_in_sessions),
-          class:classes!check_in_sessions_class_id_fkey(
+          id,
+          code,
+          is_active,
+          expires_at,
+          class:classes!check_in_sessions_class_id_fkey (
             capacity
           )
         `)
         .eq("code", code.toUpperCase())
         .single();
 
-      if (sessionError || !session || !session.is_session_valid) {
-        throw new Error(
-          !session 
-            ? "Invalid code" 
-            : !session.is_session_valid 
-              ? "This session has expired" 
-              : "Invalid or expired code"
-        );
+      if (sessionError || !session) {
+        throw new Error("Invalid code");
+      }
+
+      // Manual validation since we can't use the function directly
+      const isValid = session.is_active && new Date(session.expires_at) > new Date();
+
+      if (!isValid) {
+        throw new Error("This session has expired");
       }
 
       // Check if student has already checked in

@@ -8,7 +8,8 @@ export interface ActiveSession {
 
 export interface CheckInSessionResponse {
   id: string;
-  is_session_valid: boolean;
+  is_active: boolean;
+  expires_at: string;
   class: {
     capacity: number;
   };
