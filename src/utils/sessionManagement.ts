@@ -21,18 +21,13 @@ export const startCheckInSession = async (classId: string, code: string) => {
 };
 
 export const endCheckInSession = async (sessionId: string) => {
-  const { error } = await supabase
-    .from("check_in_sessions")
-    .update({ is_active: false })
-    .eq("id", sessionId);
-
-  if (error) throw error;
-
+  // First get all check-ins with student names
   const { data: checkIns, error: checkInsError } = await supabase
     .from("student_check_ins")
     .select(`
       id,
       checked_in_at,
+      status,
       student_id,
       profiles (
         name
@@ -42,5 +37,25 @@ export const endCheckInSession = async (sessionId: string) => {
     .order("checked_in_at", { ascending: true });
 
   if (checkInsError) throw checkInsError;
+
+  // Format check-ins for storage
+  const checkInDetails = checkIns?.map(checkIn => ({
+    id: checkIn.id,
+    checked_in_at: checkIn.checked_in_at,
+    status: checkIn.status,
+    student_name: checkIn.profiles?.name || 'Unknown'
+  }));
+
+  // Update session with check-in details and mark as inactive
+  const { error } = await supabase
+    .from("check_in_sessions")
+    .update({ 
+      is_active: false,
+      check_in_details: checkInDetails 
+    })
+    .eq("id", sessionId);
+
+  if (error) throw error;
+
   return checkIns;
 };
