@@ -13,9 +13,9 @@ export const useActiveSession = (userId: string | undefined) => {
       const { data: checkIn } = await supabase
         .from("student_check_ins")
         .select(`
-          session:session_id(
+          session:check_in_sessions!student_check_ins_session_id_fkey(
             id,
-            class:class_id(
+            class:classes!check_in_sessions_class_id_fkey(
               capacity
             )
           )
@@ -23,7 +23,7 @@ export const useActiveSession = (userId: string | undefined) => {
         .eq("student_id", userId)
         .order("checked_in_at", { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (checkIn?.session) {
         setActiveSession(checkIn.session);

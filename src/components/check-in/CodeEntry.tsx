@@ -33,7 +33,7 @@ export const CodeEntry = () => {
         .select(`
           *,
           is_session_valid(check_in_sessions),
-          class:class_id(
+          class:classes!check_in_sessions_class_id_fkey(
             capacity
           )
         `)
@@ -103,7 +103,7 @@ export const CodeEntry = () => {
         </CardContent>
       </Card>
 
-      {activeSession && (
+      {activeSession && activeSession.class && (
         <CheckInProgress 
           sessionId={activeSession.id} 
           classCapacity={activeSession.class.capacity} 
