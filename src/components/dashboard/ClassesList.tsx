@@ -6,13 +6,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { CreateClassDialog } from "./CreateClassDialog";
 
 interface ClassesListProps {
   classes: any[];
   userRole: string;
+  onClassCreated?: () => void;
 }
 
-export const ClassesList = ({ classes, userRole }: ClassesListProps) => {
+export const ClassesList = ({ classes, userRole, onClassCreated }: ClassesListProps) => {
   return (
     <Card className="animate-fadeIn [animation-delay:200ms]">
       <CardHeader>
@@ -25,7 +27,8 @@ export const ClassesList = ({ classes, userRole }: ClassesListProps) => {
             : "View your class schedule"}
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        {userRole === "teacher" && <CreateClassDialog onClassCreated={onClassCreated} />}
         {userRole === "teacher" && classes.length > 0 ? (
           <ul className="space-y-2">
             {classes.map((classItem) => (

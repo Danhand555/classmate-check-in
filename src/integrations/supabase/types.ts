@@ -55,6 +55,7 @@ export type Database = {
           id: string
           name: string
           teacher_id: string
+          total_students: number
         }
         Insert: {
           capacity: number
@@ -63,6 +64,7 @@ export type Database = {
           id?: string
           name: string
           teacher_id: string
+          total_students?: number
         }
         Update: {
           capacity?: number
@@ -71,6 +73,7 @@ export type Database = {
           id?: string
           name?: string
           teacher_id?: string
+          total_students?: number
         }
         Relationships: []
       }
