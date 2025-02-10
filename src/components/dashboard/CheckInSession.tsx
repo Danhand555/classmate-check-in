@@ -6,12 +6,20 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { generateRandomCode } from "@/utils/codeGenerator";
 import { startCheckInSession, endCheckInSession } from "@/utils/sessionManagement";
 import { ActiveSession } from "./ActiveSession";
 import { CodeGeneratorForm } from "./CodeGeneratorForm";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface CheckInSessionProps {
   classes: any[];
@@ -23,6 +31,13 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
   const [customCode, setCustomCode] = useState("");
   const [timeLeft, setTimeLeft] = useState(240); // 4 minutes in seconds
   const [checkedInCount, setCheckedInCount] = useState(0);
+  const [selectedClassId, setSelectedClassId] = useState<string>("");
+
+  useEffect(() => {
+    if (classes.length > 0 && !selectedClassId) {
+      setSelectedClassId(classes[0].id);
+    }
+  }, [classes]);
 
   useEffect(() => {
     if (activeSession) {
@@ -61,16 +76,16 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
         return;
       }
 
-      if (classes.length === 0) {
+      if (!selectedClassId) {
         toast({
           title: "Error",
-          description: "No classes available",
+          description: "Please select a class first",
           variant: "destructive",
         });
         return;
       }
 
-      const data = await startCheckInSession(classes[0].id, customCode);
+      const data = await startCheckInSession(selectedClassId, customCode);
       setActiveSession(data);
       setTimeLeft(240); // Reset to 4 minutes
       setCheckedInCount(0);
@@ -130,6 +145,23 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
     }
   };
 
+  if (classes.length === 0) {
+    return (
+      <Card className="col-span-full animate-fadeIn">
+        <CardHeader>
+          <CardTitle>Class Code Generator</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert>
+            <AlertDescription>
+              No classes available. Please create a class first.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="col-span-full animate-fadeIn">
       <CardHeader>
@@ -144,12 +176,34 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
             onEndSession={handleEndSession}
           />
         ) : (
-          <CodeGeneratorForm
-            customCode={customCode}
-            onCodeChange={setCustomCode}
-            onGenerateCode={handleGenerateCode}
-            onStartSession={handleStartSession}
-          />
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <label htmlFor="class-select" className="text-sm font-medium">
+                Select Class
+              </label>
+              <Select
+                value={selectedClassId}
+                onValueChange={setSelectedClassId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a class" />
+                </SelectTrigger>
+                <SelectContent>
+                  {classes.map((classItem) => (
+                    <SelectItem key={classItem.id} value={classItem.id}>
+                      {classItem.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <CodeGeneratorForm
+              customCode={customCode}
+              onCodeChange={setCustomCode}
+              onGenerateCode={handleGenerateCode}
+              onStartSession={handleStartSession}
+            />
+          </div>
         )}
       </CardContent>
     </Card>
