@@ -61,7 +61,10 @@ export const AttendanceHistory = () => {
         .limit(5);
 
       if (!error && data) {
+        console.log('Past sessions:', data);
         setSessions(data as SessionHistory[]);
+      } else if (error) {
+        console.error('Error fetching sessions:', error);
       }
       setIsLoading(false);
     };
@@ -82,9 +85,9 @@ export const AttendanceHistory = () => {
         {isLoading ? (
           <p className="text-muted-foreground">Loading...</p>
         ) : sessions.length === 0 ? (
-          <p className="text-muted-foreground">No past sessions found</p>
+          <p className="text-muted-foreground text-lg">No past sessions found</p>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {sessions.map((session) => (
               <div key={session.id} className="space-y-4">
                 <div className="flex justify-between items-center">
@@ -96,12 +99,13 @@ export const AttendanceHistory = () => {
                       {format(new Date(session.created_at), "MMMM d, yyyy 'at' h:mm a")}
                     </p>
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    Code: {session.code}
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">Code: </span>
+                    <span className="font-medium">{session.code}</span>
                   </div>
                 </div>
 
-                <div className="border rounded-lg">
+                <div className="border rounded-lg overflow-hidden">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -110,19 +114,27 @@ export const AttendanceHistory = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {session.check_in_details?.map((checkIn) => (
-                        <TableRow key={checkIn.id}>
-                          <TableCell>{checkIn.student_name}</TableCell>
-                          <TableCell className="text-right">
-                            <Badge 
-                              variant={checkIn.status === "success" ? "default" : "destructive"}
-                              className={checkIn.status === "success" ? "bg-green-500" : ""}
-                            >
-                              {checkIn.status === "success" ? "Present" : checkIn.status}
-                            </Badge>
+                      {session.check_in_details && session.check_in_details.length > 0 ? (
+                        session.check_in_details.map((checkIn) => (
+                          <TableRow key={checkIn.id}>
+                            <TableCell className="font-medium">{checkIn.student_name}</TableCell>
+                            <TableCell className="text-right">
+                              <Badge 
+                                variant={checkIn.status === "success" ? "default" : "destructive"}
+                                className={checkIn.status === "success" ? "bg-green-500" : ""}
+                              >
+                                {checkIn.status === "success" ? "Present" : checkIn.status}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={2} className="text-center text-muted-foreground py-4">
+                            No check-ins recorded
                           </TableCell>
                         </TableRow>
-                      ))}
+                      )}
                     </TableBody>
                   </Table>
                 </div>
@@ -134,4 +146,3 @@ export const AttendanceHistory = () => {
     </Card>
   );
 };
-
