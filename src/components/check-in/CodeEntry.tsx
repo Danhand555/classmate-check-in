@@ -40,10 +40,14 @@ export const CodeEntry = () => {
           )
         `)
         .eq("code", code.toUpperCase())
-        .single();
+        .maybeSingle();
 
-      if (sessionError || !session) {
-        throw new Error("Invalid code");
+      if (sessionError) {
+        throw new Error("Error checking code. Please try again.");
+      }
+
+      if (!session) {
+        throw new Error("Invalid code. Please check and try again.");
       }
 
       // Manual validation since we can't use the function directly
@@ -59,7 +63,7 @@ export const CodeEntry = () => {
         .select("id")
         .eq("session_id", session.id)
         .eq("student_id", user?.id)
-        .single();
+        .maybeSingle();
 
       if (existingCheckIn) {
         throw new Error("You have already checked in for this session");
