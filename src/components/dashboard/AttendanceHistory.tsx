@@ -19,20 +19,21 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
+type CheckInDetail = {
+  id: string;
+  checked_in_at: string;
+  status: string;
+  student_name: string;
+}
+
 type SessionHistory = {
   id: string;
   created_at: string;
   code: string;
+  check_in_details: CheckInDetail[] | null;
   class: {
     name: string;
   };
-  student_check_ins: {
-    id: string;
-    status: string;
-    profiles: {
-      name: string;
-    };
-  }[];
 };
 
 export const AttendanceHistory = () => {
@@ -50,15 +51,9 @@ export const AttendanceHistory = () => {
           id,
           created_at,
           code,
+          check_in_details,
           class:classes!check_in_sessions_class_id_fkey (
             name
-          ),
-          student_check_ins (
-            id,
-            status,
-            profiles:student_id (
-              name
-            )
           )
         `)
         .eq('is_active', false)
@@ -115,9 +110,9 @@ export const AttendanceHistory = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {session.student_check_ins.map((checkIn) => (
+                      {session.check_in_details?.map((checkIn) => (
                         <TableRow key={checkIn.id}>
-                          <TableCell>{checkIn.profiles.name}</TableCell>
+                          <TableCell>{checkIn.student_name}</TableCell>
                           <TableCell className="text-right">
                             <Badge 
                               variant={checkIn.status === "success" ? "default" : "destructive"}
@@ -139,3 +134,4 @@ export const AttendanceHistory = () => {
     </Card>
   );
 };
+
