@@ -46,23 +46,44 @@ const SignUp = () => {
     setError("");
     setIsLoading(true);
 
+    // Basic validation
+    if (!formData.name.trim()) {
+      setError("Please enter your name");
+      setIsLoading(false);
+      return;
+    }
+
     if (!validateEmail(formData.email)) {
       setError("Please enter a valid email address");
       setIsLoading(false);
       return;
     }
 
-    // For students, we don't need the subject field
+    if (formData.password.length < 6) {
+      setError("Password must be at least 6 characters long");
+      setIsLoading(false);
+      return;
+    }
+
+    // For students, we explicitly set subject to undefined
+    // For teachers, we ensure subject is provided
     const signupData = {
       ...formData,
       subject: formData.role === 'student' ? undefined : formData.subject,
     };
 
+    // Additional validation for teachers
+    if (formData.role === 'teacher' && !formData.subject.trim()) {
+      setError("Teachers must specify a subject");
+      setIsLoading(false);
+      return;
+    }
+
     try {
       await signup(signupData);
       toast({
         title: "Account created successfully",
-        description: "Welcome to the Classroom Check-in System!",
+        description: `Welcome to the Classroom Check-in System! You've registered as a ${formData.role}.`,
         duration: 3000,
       });
       navigate("/dashboard");
@@ -135,6 +156,7 @@ const SignUp = () => {
                   setFormData({ ...formData, password: e.target.value })
                 }
                 required
+                minLength={6}
               />
             </div>
             <div className="space-y-2">
