@@ -27,20 +27,37 @@ export const CodeEntry = () => {
 
     setIsSubmitting(true);
     try {
-      // Find active session with this code
+      // Find session with this code that is active and not expired
       const { data: session, error: sessionError } = await supabase
         .from("check_in_sessions")
-        .select("id, class_id")
+        .select("*, is_session_valid(check_in_sessions)")
         .eq("code", code.toUpperCase())
-        .eq("is_active", true)
         .single();
 
-      if (sessionError || !session) {
-        throw new Error("Invalid or expired code");
+      if (sessionError || !session || !session.is_session_valid) {
+        throw new Error(
+          !session 
+            ? "Invalid code" 
+            : !session.is_session_valid 
+              ? "This session has expired" 
+              : "Invalid or expired code"
+        );
+      }
+
+      // Check if student has already checked in
+      const { data: existingCheckIn, error: checkInError } = await supabase
+        .from("student_check_ins")
+        .select("id")
+        .eq("session_id", session.id)
+        .eq("student_id", user?.id)
+        .single();
+
+      if (existingCheckIn) {
+        throw new Error("You have already checked in for this session");
       }
 
       // Record the check-in
-      const { error: checkInError } = await supabase
+      const { error: insertError } = await supabase
         .from("student_check_ins")
         .insert({
           session_id: session.id,
@@ -48,7 +65,7 @@ export const CodeEntry = () => {
           status: "success",
         });
 
-      if (checkInError) {
+      if (insertError) {
         throw new Error("Failed to record check-in");
       }
 
@@ -100,3 +117,4 @@ export const CodeEntry = () => {
     </Card>
   );
 };
+
