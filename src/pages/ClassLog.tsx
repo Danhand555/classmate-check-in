@@ -64,7 +64,7 @@ export default function ClassLog() {
           id,
           created_at,
           code,
-          class:classes!inner (
+          class:classes!check_in_sessions_class_id_fkey (
             name,
             capacity
           )
@@ -97,10 +97,12 @@ export default function ClassLog() {
         return;
       }
 
-      setSession({
-        ...sessionData,
-        check_ins: checkInsData || []
-      });
+      if (sessionData) {
+        setSession({
+          ...sessionData,
+          check_ins: checkInsData || []
+        });
+      }
       setIsLoading(false);
     };
 
@@ -235,4 +237,3 @@ export default function ClassLog() {
     </div>
   );
 };
-

@@ -71,7 +71,7 @@ export const AttendanceHistory = () => {
             id,
             code,
             created_at,
-            class:classes!inner (
+            class:classes!check_in_sessions_class_id_fkey (
               name,
               capacity
             )
@@ -196,4 +196,3 @@ export const AttendanceHistory = () => {
     </Card>
   );
 };
-
