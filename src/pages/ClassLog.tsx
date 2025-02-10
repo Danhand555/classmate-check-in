@@ -27,18 +27,20 @@ interface CheckInDetail {
   id: string;
   checked_in_at: string;
   status: string;
-  student_name: string;
+  profiles: {
+    name: string;
+  };
 }
 
 interface SessionDetails {
   id: string;
   created_at: string;
   code: string;
-  check_in_details: CheckInDetail[] | null;
   class: {
     name: string;
     capacity: number;
   };
+  check_ins: CheckInDetail[];
 }
 
 export default function ClassLog() {
@@ -55,14 +57,14 @@ export default function ClassLog() {
     }
 
     const fetchSessionDetails = async () => {
-      const { data, error } = await supabase
+      // First fetch the session and class details
+      const { data: sessionData, error: sessionError } = await supabase
         .from('check_in_sessions')
         .select(`
           id,
           created_at,
           code,
-          check_in_details,
-          class:classes!check_in_sessions_class_id_fkey (
+          class:classes!inner (
             name,
             capacity
           )
@@ -70,17 +72,35 @@ export default function ClassLog() {
         .eq('id', sessionId)
         .single();
 
-      if (error) {
-        console.error('Error fetching session:', error);
+      if (sessionError) {
+        console.error('Error fetching session:', sessionError);
         navigate('/dashboard');
-      } else if (data) {
-        // Ensure check_in_details is properly typed
-        const typedData: SessionDetails = {
-          ...data,
-          check_in_details: data.check_in_details as CheckInDetail[] | null,
-        };
-        setSession(typedData);
+        return;
       }
+
+      // Then fetch all check-ins for this session
+      const { data: checkInsData, error: checkInsError } = await supabase
+        .from('student_check_ins')
+        .select(`
+          id,
+          checked_in_at,
+          status,
+          profiles (
+            name
+          )
+        `)
+        .eq('session_id', sessionId)
+        .order('checked_in_at', { ascending: true });
+
+      if (checkInsError) {
+        console.error('Error fetching check-ins:', checkInsError);
+        return;
+      }
+
+      setSession({
+        ...sessionData,
+        check_ins: checkInsData || []
+      });
       setIsLoading(false);
     };
 
@@ -107,8 +127,8 @@ export default function ClassLog() {
     );
   }
 
-  const attendanceRate = session.check_in_details 
-    ? (session.check_in_details.filter(c => c.status === 'success').length / session.class.capacity) * 100
+  const attendanceRate = session.check_ins 
+    ? (session.check_ins.filter(c => c.status === 'success').length / session.class.capacity) * 100
     : 0;
 
   return (
@@ -155,7 +175,7 @@ export default function ClassLog() {
                     <div className="text-center">
                       <p className="text-sm font-medium text-gray-500">Students Present</p>
                       <p className="text-3xl font-bold text-gray-900">
-                        {session.check_in_details?.filter(c => c.status === 'success').length || 0} / {session.class.capacity}
+                        {session.check_ins.filter(c => c.status === 'success').length} / {session.class.capacity}
                       </p>
                     </div>
                   </CardContent>
@@ -178,11 +198,11 @@ export default function ClassLog() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {session.check_in_details && session.check_in_details.length > 0 ? (
-                        session.check_in_details.map((checkIn) => (
+                      {session.check_ins && session.check_ins.length > 0 ? (
+                        session.check_ins.map((checkIn) => (
                           <TableRow key={checkIn.id}>
                             <TableCell className="font-medium">
-                              {checkIn.student_name}
+                              {checkIn.profiles.name}
                             </TableCell>
                             <TableCell>
                               {format(new Date(checkIn.checked_in_at), "h:mm a")}
@@ -214,4 +234,5 @@ export default function ClassLog() {
       </div>
     </div>
   );
-}
+};
+

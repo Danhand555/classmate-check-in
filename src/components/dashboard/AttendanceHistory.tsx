@@ -22,58 +22,91 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
 
-type CheckInDetail = {
+type CheckIn = {
   id: string;
   checked_in_at: string;
   status: string;
-  student_name: string;
-}
-
-type SessionHistory = {
-  id: string;
-  created_at: string;
-  code: string;
-  check_in_details: CheckInDetail[] | null;
-  class: {
+  profiles: {
     name: string;
+  };
+  check_in_sessions: {
+    code: string;
+    class: {
+      name: string;
+      capacity: number;
+    };
+  };
+};
+
+type GroupedCheckIns = {
+  [sessionId: string]: {
+    sessionCode: string;
+    className: string;
+    capacity: number;
+    created_at: string;
+    checkIns: CheckIn[];
   };
 };
 
 export const AttendanceHistory = () => {
-  const [sessions, setSessions] = useState<SessionHistory[]>([]);
+  const [groupedCheckIns, setGroupedCheckIns] = useState<GroupedCheckIns>({});
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchSessions = async () => {
+    const fetchCheckIns = async () => {
       if (!user || user.role !== 'teacher') return;
 
       const { data, error } = await supabase
-        .from('check_in_sessions')
+        .from('student_check_ins')
         .select(`
           id,
-          created_at,
-          code,
-          check_in_details,
-          class:classes!check_in_sessions_class_id_fkey (
+          checked_in_at,
+          status,
+          profiles (
             name
+          ),
+          check_in_sessions!inner (
+            id,
+            code,
+            created_at,
+            class:classes!inner (
+              name,
+              capacity
+            )
           )
         `)
-        .eq('is_active', false)
-        .order('created_at', { ascending: false })
-        .limit(5);
+        .order('checked_in_at', { ascending: false });
 
-      if (!error && data) {
-        console.log('Past sessions:', data);
-        setSessions(data as SessionHistory[]);
-      } else if (error) {
-        console.error('Error fetching sessions:', error);
+      if (error) {
+        console.error('Error fetching check-ins:', error);
+        return;
+      }
+
+      if (data) {
+        // Group check-ins by session
+        const grouped = data.reduce((acc: GroupedCheckIns, checkIn: any) => {
+          const sessionId = checkIn.check_in_sessions.id;
+          if (!acc[sessionId]) {
+            acc[sessionId] = {
+              sessionCode: checkIn.check_in_sessions.code,
+              className: checkIn.check_in_sessions.class.name,
+              capacity: checkIn.check_in_sessions.class.capacity,
+              created_at: checkIn.check_in_sessions.created_at,
+              checkIns: []
+            };
+          }
+          acc[sessionId].checkIns.push(checkIn);
+          return acc;
+        }, {});
+
+        setGroupedCheckIns(grouped);
       }
       setIsLoading(false);
     };
 
-    fetchSessions();
+    fetchCheckIns();
   }, [user]);
 
   if (user?.role !== 'teacher') {
@@ -88,16 +121,16 @@ export const AttendanceHistory = () => {
       <CardContent>
         {isLoading ? (
           <p className="text-muted-foreground">Loading...</p>
-        ) : sessions.length === 0 ? (
+        ) : Object.keys(groupedCheckIns).length === 0 ? (
           <p className="text-muted-foreground text-lg">No past sessions found</p>
         ) : (
           <div className="space-y-8">
-            {sessions.map((session) => (
-              <div key={session.id} className="space-y-4">
+            {Object.entries(groupedCheckIns).map(([sessionId, session]) => (
+              <div key={sessionId} className="space-y-4">
                 <div className="flex justify-between items-center">
                   <div>
                     <h3 className="text-lg font-semibold">
-                      {session.class.name}
+                      {session.className}
                     </h3>
                     <p className="text-sm text-muted-foreground">
                       {format(new Date(session.created_at), "MMMM d, yyyy 'at' h:mm a")}
@@ -106,13 +139,13 @@ export const AttendanceHistory = () => {
                   <div className="space-x-4 flex items-center">
                     <div className="text-sm">
                       <span className="text-muted-foreground">Code: </span>
-                      <span className="font-medium">{session.code}</span>
+                      <span className="font-medium">{session.sessionCode}</span>
                     </div>
                     <Button 
                       variant="outline" 
                       size="sm"
                       className="flex items-center gap-2"
-                      onClick={() => navigate(`/class-log/${session.id}`)}
+                      onClick={() => navigate(`/class-log/${sessionId}`)}
                     >
                       <ExternalLink className="h-4 w-4" />
                       View Details
@@ -129,10 +162,12 @@ export const AttendanceHistory = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {session.check_in_details && session.check_in_details.length > 0 ? (
-                        session.check_in_details.map((checkIn) => (
+                      {session.checkIns.length > 0 ? (
+                        session.checkIns.map((checkIn) => (
                           <TableRow key={checkIn.id}>
-                            <TableCell className="font-medium">{checkIn.student_name}</TableCell>
+                            <TableCell className="font-medium">
+                              {checkIn.profiles.name}
+                            </TableCell>
                             <TableCell className="text-right">
                               <Badge 
                                 variant={checkIn.status === "success" ? "default" : "destructive"}
@@ -161,3 +196,4 @@ export const AttendanceHistory = () => {
     </Card>
   );
 };
+

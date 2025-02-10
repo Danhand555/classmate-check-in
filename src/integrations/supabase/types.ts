@@ -11,7 +11,6 @@ export type Database = {
     Tables: {
       check_in_sessions: {
         Row: {
-          check_in_details: Json | null
           class_id: string
           code: string
           created_at: string
@@ -21,7 +20,6 @@ export type Database = {
           starts_at: string
         }
         Insert: {
-          check_in_details?: Json | null
           class_id: string
           code: string
           created_at?: string
@@ -31,7 +29,6 @@ export type Database = {
           starts_at?: string
         }
         Update: {
-          check_in_details?: Json | null
           class_id?: string
           code?: string
           created_at?: string
