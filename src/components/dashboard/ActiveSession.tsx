@@ -2,18 +2,29 @@
 import { Clock4, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { CheckInsTable } from "@/components/check-in/CheckInsTable";
+
+interface CheckIn {
+  id: string;
+  checked_in_at: string;
+  profiles: {
+    name: string;
+  } | null;
+}
 
 interface ActiveSessionProps {
   code: string;
   timeLeft: number;
   checkedInCount: number;
+  checkIns: CheckIn[];
   onEndSession: () => void;
 }
 
 export const ActiveSession = ({ 
   code, 
   timeLeft, 
-  checkedInCount, 
+  checkedInCount,
+  checkIns,
   onEndSession 
 }: ActiveSessionProps) => {
   const progressValue = (timeLeft / 300) * 100;
@@ -43,6 +54,11 @@ export const ActiveSession = ({
           <span>{checkedInCount} students checked in</span>
         </div>
       </div>
+
+      {checkIns.length > 0 && (
+        <CheckInsTable checkIns={checkIns} />
+      )}
+
       <Button
         variant="destructive"
         className="w-full"

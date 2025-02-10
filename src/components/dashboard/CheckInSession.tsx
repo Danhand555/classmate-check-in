@@ -32,6 +32,7 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
     setCustomCode,
     timeLeft,
     checkedInCount,
+    checkIns,
     handleStartSession,
     handleEndSession,
   } = useSessionManagement(selectedClassId);
@@ -69,6 +70,7 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
             code={activeSession.code}
             timeLeft={timeLeft}
             checkedInCount={checkedInCount}
+            checkIns={checkIns}
             onEndSession={handleEndSession}
           />
         ) : (

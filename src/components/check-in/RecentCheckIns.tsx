@@ -16,8 +16,10 @@ type CheckIn = {
   id: string;
   checked_in_at: string;
   status: string;
-  classes: {
-    name: string;
+  check_in_sessions: {
+    classes: {
+      name: string;
+    };
   } | null;
 };
 
@@ -36,7 +38,11 @@ export const RecentCheckIns = () => {
           id,
           checked_in_at,
           status,
-          check_in_sessions ( classes ( name ) )
+          check_in_sessions (
+            classes (
+              name
+            )
+          )
         `)
         .eq("student_id", user.id)
         .order("checked_in_at", { ascending: false })
@@ -47,7 +53,7 @@ export const RecentCheckIns = () => {
           id: item.id,
           checked_in_at: item.checked_in_at,
           status: item.status,
-          classes: item.check_in_sessions?.classes || null
+          check_in_sessions: item.check_in_sessions
         }));
         setCheckIns(transformedData);
       }
@@ -76,7 +82,7 @@ export const RecentCheckIns = () => {
               >
                 <div className="space-y-1">
                   <div className="font-medium">
-                    {checkIn.classes?.name || "Unknown Class"}
+                    {checkIn.check_in_sessions?.classes?.name || "Unknown Class"}
                   </div>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">

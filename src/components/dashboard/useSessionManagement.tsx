@@ -4,15 +4,42 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { startCheckInSession, endCheckInSession } from "@/utils/sessionManagement";
 
+interface CheckIn {
+  id: string;
+  checked_in_at: string;
+  profiles: {
+    name: string;
+  } | null;
+}
+
 export const useSessionManagement = (selectedClassId: string) => {
   const { toast } = useToast();
   const [activeSession, setActiveSession] = useState<any>(null);
   const [customCode, setCustomCode] = useState("");
   const [timeLeft, setTimeLeft] = useState(240);
   const [checkedInCount, setCheckedInCount] = useState(0);
+  const [checkIns, setCheckIns] = useState<CheckIn[]>([]);
 
   useEffect(() => {
     if (activeSession) {
+      const fetchCheckIns = async () => {
+        const { data } = await supabase
+          .from("student_check_ins")
+          .select(`
+            id,
+            checked_in_at,
+            profiles (
+              name
+            )
+          `)
+          .eq("session_id", activeSession.id)
+          .order("checked_in_at", { ascending: true });
+
+        if (data) {
+          setCheckIns(data);
+        }
+      };
+
       const timer = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
@@ -34,12 +61,15 @@ export const useSessionManagement = (selectedClassId: string) => {
             table: 'student_check_ins',
             filter: `session_id=eq.${activeSession.id}`,
           },
-          (payload) => {
+          async (payload) => {
             console.log('New check-in:', payload);
             setCheckedInCount((prev) => prev + 1);
+            fetchCheckIns();
           }
         )
         .subscribe();
+
+      fetchCheckIns();
 
       return () => {
         clearInterval(timer);
@@ -66,6 +96,7 @@ export const useSessionManagement = (selectedClassId: string) => {
               setActiveSession(null);
               setTimeLeft(240);
               setCustomCode("");
+              setCheckIns([]);
             }
           }
         )
@@ -101,6 +132,7 @@ export const useSessionManagement = (selectedClassId: string) => {
       setActiveSession(data);
       setTimeLeft(240);
       setCheckedInCount(0);
+      setCheckIns([]);
       toast({
         title: "Session started",
         description: `Check-in code: ${customCode}`,
@@ -129,6 +161,7 @@ export const useSessionManagement = (selectedClassId: string) => {
       setTimeLeft(240);
       setCustomCode("");
       setCheckedInCount(0);
+      setCheckIns([]);
     } catch (error: any) {
       toast({
         title: "Error ending session",
@@ -144,6 +177,7 @@ export const useSessionManagement = (selectedClassId: string) => {
     setCustomCode,
     timeLeft,
     checkedInCount,
+    checkIns,
     handleStartSession,
     handleEndSession,
   };
