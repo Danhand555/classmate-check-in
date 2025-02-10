@@ -30,7 +30,7 @@ export const CheckInProgress = ({ sessionId, classCapacity }: CheckInProgressPro
         .select(`
           id,
           checked_in_at,
-          student:student_id(name)
+          student:profiles!student_check_ins_student_id_fkey(name)
         `)
         .eq("session_id", sessionId)
         .order("checked_in_at", { ascending: true });
@@ -60,7 +60,7 @@ export const CheckInProgress = ({ sessionId, classCapacity }: CheckInProgressPro
             .select(`
               id,
               checked_in_at,
-              student:student_id(name)
+              student:profiles!student_check_ins_student_id_fkey(name)
             `)
             .eq("id", payload.new.id)
             .single();
