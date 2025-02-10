@@ -30,27 +30,27 @@ export const ActiveSession = ({
   const progressValue = (timeLeft / 240) * 100;
 
   return (
-    <div className="space-y-8 py-4">
+    <div className="space-y-8">
       <div className="text-center space-y-6">
         <div>
-          <p className="text-blue-600 text-xl">Active Code:</p>
-          <p className="text-blue-600 text-6xl font-bold tracking-wider">
+          <p className="text-lg text-gray-600 mb-2">Active Code:</p>
+          <p className="text-5xl font-bold text-blue-600 tracking-wider">
             {code}
           </p>
         </div>
         <div className="space-y-2">
-          <p className="text-blue-600 text-xl flex items-center justify-center gap-2">
-            <Clock4 className="w-6 h-6" />
-            Time Remaining:
-          </p>
-          <Progress value={progressValue} className="h-3" />
-          <p className="text-blue-600 text-4xl font-bold">
+          <div className="flex items-center justify-center gap-2 text-gray-600">
+            <Clock4 className="w-5 h-5" />
+            <span>Time Remaining:</span>
+          </div>
+          <Progress value={progressValue} className="h-2" />
+          <p className="text-3xl font-bold text-gray-900">
             {Math.floor(timeLeft / 60)}:
             {(timeLeft % 60).toString().padStart(2, "0")}
           </p>
         </div>
-        <div className="flex items-center justify-center gap-2 text-blue-600 text-xl">
-          <Users className="w-6 h-6" />
+        <div className="flex items-center justify-center gap-2 text-gray-600">
+          <Users className="w-5 h-5" />
           <span>{checkedInCount} students checked in</span>
         </div>
       </div>

@@ -5,8 +5,8 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { generateRandomCode } from "@/utils/codeGenerator";
 import { ActiveSession } from "./ActiveSession";
 import { CodeGeneratorForm } from "./CodeGeneratorForm";
@@ -42,27 +42,15 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
     setCustomCode(code);
   };
 
-  if (classes.length === 0) {
-    return (
-      <Card className="col-span-full animate-fadeIn">
-        <CardHeader>
-          <CardTitle>Class Code Generator</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Alert>
-            <AlertDescription>
-              No classes available. Please create a class first.
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card className="col-span-full animate-fadeIn">
+    <Card className="bg-white shadow-sm">
       <CardHeader>
-        <CardTitle>Class Code Generator</CardTitle>
+        <CardTitle className="text-2xl font-bold text-gray-900">Class Code Generator</CardTitle>
+        {!activeSession && (
+          <CardDescription className="text-gray-600">
+            Generate a code for your students to check in
+          </CardDescription>
+        )}
       </CardHeader>
       <CardContent>
         {activeSession ? (
