@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -18,6 +19,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ExternalLink } from "lucide-react";
 
 type CheckInDetail = {
   id: string;
@@ -40,6 +43,7 @@ export const AttendanceHistory = () => {
   const [sessions, setSessions] = useState<SessionHistory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchSessions = async () => {
@@ -99,9 +103,20 @@ export const AttendanceHistory = () => {
                       {format(new Date(session.created_at), "MMMM d, yyyy 'at' h:mm a")}
                     </p>
                   </div>
-                  <div className="text-sm">
-                    <span className="text-muted-foreground">Code: </span>
-                    <span className="font-medium">{session.code}</span>
+                  <div className="space-x-4 flex items-center">
+                    <div className="text-sm">
+                      <span className="text-muted-foreground">Code: </span>
+                      <span className="font-medium">{session.code}</span>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="flex items-center gap-2"
+                      onClick={() => navigate(`/class-log/${session.id}`)}
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      View Details
+                    </Button>
                   </div>
                 </div>
 
