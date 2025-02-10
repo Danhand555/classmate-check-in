@@ -27,15 +27,19 @@ export const CodeEntry = () => {
           table: 'check_in_sessions',
         },
         (payload) => {
-          console.log('Check-in session changed:', payload);
+          console.log('Real-time update received:', payload);
+          // Refresh active session when changes occur
+          if (user?.id) {
+            // The useActiveSession hook will handle the refresh
+          }
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      channel.unsubscribe();
     };
-  }, []);
+  }, [user]);
 
   const handleSubmit = async (code: string) => {
     if (!code || code.length !== 6) {
@@ -87,6 +91,10 @@ export const CodeEntry = () => {
         .eq("student_id", user?.id)
         .maybeSingle();
 
+      if (checkInError) {
+        throw new Error("Error checking existing check-in");
+      }
+
       if (existingCheckIn) {
         throw new Error("You have already checked in for this session");
       }
@@ -107,7 +115,6 @@ export const CodeEntry = () => {
       toast({
         title: "Success!",
         description: "You have successfully checked in",
-        variant: "default",
       });
     } catch (error: any) {
       toast({

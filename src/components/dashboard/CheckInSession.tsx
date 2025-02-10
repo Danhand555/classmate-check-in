@@ -52,7 +52,59 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
         });
       }, 1000);
 
-      return () => clearInterval(timer);
+      // Subscribe to check-ins for this session
+      const channel = supabase
+        .channel('schema-db-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'student_check_ins',
+            filter: `session_id=eq.${activeSession.id}`,
+          },
+          (payload) => {
+            console.log('New check-in:', payload);
+            setCheckedInCount((prev) => prev + 1);
+          }
+        )
+        .subscribe();
+
+      return () => {
+        clearInterval(timer);
+        channel.unsubscribe();
+      };
+    }
+  }, [activeSession]);
+
+  // Monitor active session changes
+  useEffect(() => {
+    if (activeSession) {
+      const channel = supabase
+        .channel('session-monitor')
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'check_in_sessions',
+            filter: `id=eq.${activeSession.id}`,
+          },
+          (payload: any) => {
+            console.log('Session updated:', payload);
+            // If session was deactivated, clear local state
+            if (!payload.new.is_active) {
+              setActiveSession(null);
+              setTimeLeft(240);
+              setCustomCode("");
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        channel.unsubscribe();
+      };
     }
   }, [activeSession]);
 
@@ -93,26 +145,6 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
         title: "Session started",
         description: `Check-in code: ${customCode}`,
       });
-
-      const channel = supabase
-        .channel('schema-db-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'student_check_ins',
-            filter: `session_id=eq.${data.id}`,
-          },
-          (payload) => {
-            setCheckedInCount((prev) => prev + 1);
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
     } catch (error: any) {
       toast({
         title: "Error starting session",
@@ -134,8 +166,9 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
       });
 
       setActiveSession(null);
-      setTimeLeft(240); // Reset to 4 minutes
+      setTimeLeft(240);
       setCustomCode("");
+      setCheckedInCount(0);
     } catch (error: any) {
       toast({
         title: "Error ending session",
