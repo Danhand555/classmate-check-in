@@ -38,21 +38,10 @@ export const endCheckInSession = async (sessionId: string) => {
 
   if (checkInsError) throw checkInsError;
 
-  // Format check-ins for storage
-  const checkInDetails = checkIns?.map(checkIn => ({
-    id: checkIn.id,
-    checked_in_at: checkIn.checked_in_at,
-    status: checkIn.status,
-    student_name: checkIn.profiles?.name || 'Unknown'
-  }));
-
-  // Update session with check-in details and mark as inactive
+  // Update session to mark as inactive
   const { error } = await supabase
     .from("check_in_sessions")
-    .update({ 
-      is_active: false,
-      check_in_details: checkInDetails 
-    })
+    .update({ is_active: false })
     .eq("id", sessionId);
 
   if (error) throw error;
