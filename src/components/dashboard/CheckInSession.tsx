@@ -21,7 +21,7 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
   const { toast } = useToast();
   const [activeSession, setActiveSession] = useState<any>(null);
   const [customCode, setCustomCode] = useState("");
-  const [timeLeft, setTimeLeft] = useState(300);
+  const [timeLeft, setTimeLeft] = useState(240); // 4 minutes in seconds
   const [checkedInCount, setCheckedInCount] = useState(0);
 
   useEffect(() => {
@@ -72,7 +72,7 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
 
       const data = await startCheckInSession(classes[0].id, customCode);
       setActiveSession(data);
-      setTimeLeft(300);
+      setTimeLeft(240); // Reset to 4 minutes
       setCheckedInCount(0);
       toast({
         title: "Session started",
@@ -119,7 +119,7 @@ export const CheckInSession = ({ classes }: CheckInSessionProps) => {
       });
 
       setActiveSession(null);
-      setTimeLeft(300);
+      setTimeLeft(240); // Reset to 4 minutes
       setCustomCode("");
     } catch (error: any) {
       toast({

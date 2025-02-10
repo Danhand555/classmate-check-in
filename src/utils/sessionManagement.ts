@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export const startCheckInSession = async (classId: string, code: string) => {
-  const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+  const expiresAt = new Date(Date.now() + 4 * 60 * 1000); // 4 minutes
 
   const { data, error } = await supabase
     .from("check_in_sessions")
