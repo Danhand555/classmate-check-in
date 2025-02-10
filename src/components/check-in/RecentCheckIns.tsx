@@ -17,7 +17,7 @@ type CheckIn = {
   checked_in_at: string;
   status: string;
   check_in_sessions: {
-    classes: {
+    class: {
       name: string;
     };
   } | null;
@@ -38,8 +38,8 @@ export const RecentCheckIns = () => {
           id,
           checked_in_at,
           status,
-          check_in_sessions (
-            classes (
+          check_in_sessions!inner (
+            class:class_id (
               name
             )
           )
@@ -49,13 +49,7 @@ export const RecentCheckIns = () => {
         .limit(5);
 
       if (!error && data) {
-        const transformedData: CheckIn[] = data.map(item => ({
-          id: item.id,
-          checked_in_at: item.checked_in_at,
-          status: item.status,
-          check_in_sessions: item.check_in_sessions
-        }));
-        setCheckIns(transformedData);
+        setCheckIns(data as CheckIn[]);
       }
       setIsLoading(false);
     };
@@ -82,7 +76,7 @@ export const RecentCheckIns = () => {
               >
                 <div className="space-y-1">
                   <div className="font-medium">
-                    {checkIn.check_in_sessions?.classes?.name || "Unknown Class"}
+                    {checkIn.check_in_sessions?.class?.name || "Unknown Class"}
                   </div>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
