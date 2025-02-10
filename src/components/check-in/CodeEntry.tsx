@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +14,28 @@ export const CodeEntry = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const activeSession = useActiveSession(user?.id);
+
+  useEffect(() => {
+    // Subscribe to real-time changes in check_in_sessions
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'check_in_sessions',
+        },
+        (payload) => {
+          console.log('Check-in session changed:', payload);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const handleSubmit = async (code: string) => {
     if (!code || code.length !== 6) {
