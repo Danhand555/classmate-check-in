@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowRight } from "lucide-react";
@@ -55,6 +55,7 @@ export const CodeEntry = () => {
       toast({
         title: "Success!",
         description: "You have successfully checked in",
+        variant: "default",
       });
       setCode("");
     } catch (error: any) {
@@ -69,28 +70,34 @@ export const CodeEntry = () => {
   };
 
   return (
-    <Card>
+    <Card className="shadow-md">
       <CardHeader>
-        <CardTitle>Check In</CardTitle>
+        <CardTitle className="text-2xl">Check-in Session</CardTitle>
+        <CardDescription>Enter the code provided by your teacher</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="flex gap-2">
+          <div>
             <Input
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
               maxLength={6}
               placeholder="Enter 6-character code"
-              className="text-center text-lg tracking-widest font-mono uppercase"
+              className="text-center text-lg tracking-widest font-mono uppercase focus:ring-2 focus:ring-primary focus:border-transparent"
               disabled={isSubmitting}
             />
-            <Button type="submit" disabled={isSubmitting || code.length !== 6}>
-              Check In
-              <ArrowRight className="ml-2" />
-            </Button>
           </div>
+          <Button 
+            type="submit" 
+            className="w-full bg-blue-500 hover:bg-blue-600 transition-colors"
+            disabled={isSubmitting || code.length !== 6}
+          >
+            Check In
+            <ArrowRight className="ml-2" />
+          </Button>
         </form>
       </CardContent>
     </Card>
   );
 };
+

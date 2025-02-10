@@ -10,6 +10,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { Calendar, Clock } from "lucide-react";
 
 type CheckIn = {
   id: string;
@@ -42,7 +43,6 @@ export const RecentCheckIns = () => {
         .limit(5);
 
       if (!error && data) {
-        // Transform the data to match the CheckIn type
         const transformedData: CheckIn[] = data.map(item => ({
           id: item.id,
           checked_in_at: item.checked_in_at,
@@ -57,44 +57,43 @@ export const RecentCheckIns = () => {
     fetchCheckIns();
   }, [user]);
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Check-ins</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">Loading...</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card>
+    <Card className="shadow-md">
       <CardHeader>
-        <CardTitle>Recent Check-ins</CardTitle>
+        <CardTitle>Attendance History</CardTitle>
       </CardHeader>
       <CardContent>
-        {checkIns.length === 0 ? (
+        {isLoading ? (
+          <p className="text-muted-foreground">Loading...</p>
+        ) : checkIns.length === 0 ? (
           <p className="text-muted-foreground">No recent check-ins</p>
         ) : (
           <div className="space-y-4">
             {checkIns.map((checkIn) => (
               <div
                 key={checkIn.id}
-                className="flex items-center justify-between border-b last:border-0 pb-2 last:pb-0"
+                className="bg-gray-50 p-4 rounded-lg flex items-center justify-between"
               >
-                <div>
-                  <p className="font-medium">
+                <div className="space-y-1">
+                  <div className="font-medium">
                     {checkIn.classes?.name || "Unknown Class"}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {format(new Date(checkIn.checked_in_at), "PPp")}
-                  </p>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-4 w-4" />
+                      {format(new Date(checkIn.checked_in_at), "MMM d, yyyy")}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-4 w-4" />
+                      {format(new Date(checkIn.checked_in_at), "h:mm a")}
+                    </span>
+                  </div>
                 </div>
-                <Badge variant={checkIn.status === "success" ? "default" : "destructive"}>
-                  {checkIn.status}
+                <Badge 
+                  variant={checkIn.status === "success" ? "default" : "destructive"}
+                  className={checkIn.status === "success" ? "bg-green-500" : ""}
+                >
+                  {checkIn.status === "success" ? "Present" : checkIn.status}
                 </Badge>
               </div>
             ))}
@@ -104,3 +103,4 @@ export const RecentCheckIns = () => {
     </Card>
   );
 };
+
