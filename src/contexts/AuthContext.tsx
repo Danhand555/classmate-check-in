@@ -44,6 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           role: session.user.user_metadata.role || "student",
           subject: session.user.user_metadata.subject,
         });
+        toast.success("Welcome back!");
       }
     });
 
@@ -68,23 +69,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const login = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      throw error;
-    }
-
-    if (data.user) {
-      setUser({
-        id: data.user.id,
-        name: data.user.user_metadata.name || "",
-        email: data.user.email || "",
-        role: data.user.user_metadata.role || "student",
-        subject: data.user.user_metadata.subject,
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
+
+      if (error) {
+        toast.error(error.message);
+        throw error;
+      }
+
+      if (data.user) {
+        setUser({
+          id: data.user.id,
+          name: data.user.user_metadata.name || "",
+          email: data.user.email || "",
+          role: data.user.user_metadata.role || "student",
+          subject: data.user.user_metadata.subject,
+        });
+        toast.success("Successfully logged in!");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      throw error;
     }
   };
 
@@ -95,39 +103,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     role: UserRole;
     subject?: string;
   }) => {
-    const { data, error } = await supabase.auth.signUp({
-      email: userData.email,
-      password: userData.password,
-      options: {
-        data: {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: userData.email,
+        password: userData.password,
+        options: {
+          data: {
+            name: userData.name,
+            role: userData.role,
+            subject: userData.subject,
+          },
+        },
+      });
+
+      if (error) {
+        toast.error(error.message);
+        throw error;
+      }
+
+      if (data.user) {
+        setUser({
+          id: data.user.id,
           name: userData.name,
+          email: userData.email,
           role: userData.role,
           subject: userData.subject,
-        },
-      },
-    });
-
-    if (error) {
+        });
+        toast.success("Successfully signed up!");
+      }
+    } catch (error) {
+      console.error("Signup error:", error);
       throw error;
-    }
-
-    if (data.user) {
-      setUser({
-        id: data.user.id,
-        name: userData.name,
-        email: userData.email,
-        role: userData.role,
-        subject: userData.subject,
-      });
     }
   };
 
   const logout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast.error("Error signing out");
-    } else {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        toast.error("Error signing out");
+        throw error;
+      }
       setUser(null);
+      toast.success("Successfully logged out");
+    } catch (error) {
+      console.error("Logout error:", error);
+      throw error;
     }
   };
 
