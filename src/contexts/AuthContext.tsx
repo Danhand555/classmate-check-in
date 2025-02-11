@@ -70,10 +70,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const login = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
-      password,
-      options: {
-        persistSession: true // Explicitly set to persist the session
-      }
+      password
     });
 
     if (error) {
@@ -108,8 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           name: userData.name,
           role: userData.role,
           subject: userData.subject,
-        },
-        persistSession: true // Explicitly set to persist the session
+        }
       }
     });
 
