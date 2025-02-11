@@ -71,13 +71,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
-      options: {
-        persistSession: true // Explicitly set to persist the session
-      }
     });
 
     if (error) {
-      toast.error(error.message);
       throw error;
     }
 
@@ -89,7 +85,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         role: data.user.user_metadata.role || "student",
         subject: data.user.user_metadata.subject,
       });
-      toast.success("Successfully logged in!");
     }
   };
 
@@ -109,12 +104,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           role: userData.role,
           subject: userData.subject,
         },
-        persistSession: true // Explicitly set to persist the session
-      }
+      },
     });
 
     if (error) {
-      toast.error(error.message);
       throw error;
     }
 
@@ -126,7 +119,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         role: userData.role,
         subject: userData.subject,
       });
-      toast.success("Successfully signed up!");
     }
   };
 
@@ -134,10 +126,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const { error } = await supabase.auth.signOut();
     if (error) {
       toast.error("Error signing out");
-      throw error;
     } else {
       setUser(null);
-      toast.success("Successfully logged out!");
     }
   };
 
